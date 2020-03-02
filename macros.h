@@ -108,13 +108,13 @@
 
 #define SN_RETURN(call, message) \
   int success = call; \
-  SN_THROWS(success != 0, message) \
+  SN_THROWS(success != 1, message) \
   return NULL;
 
 #define SN_RETURN_BOOLEAN(call) \
   int success = call; \
   napi_value result; \
-  SN_STATUS_THROWS(napi_get_boolean(env, success == 0, &result), "result not boolean") \
+  SN_STATUS_THROWS(napi_get_boolean(env, success, &result), "result not boolean") \
   return result;
 
 #define SN_RETURN_BOOLEAN_FROM_1(call) \
