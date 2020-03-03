@@ -158,7 +158,7 @@
 
 #define SN_CALL(call, message) \
   int success = call; \
-  SN_THROWS(success != 0, message)
+  SN_THROWS(success != 1, message)
 
 #define SN_RETURN(call, message) \
   int success = call; \

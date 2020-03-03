@@ -2,10 +2,10 @@
 #include <string.h>
 #include <assert.h>
 #include "macros.h"
-#include <secp256k1.h>
-#include <secp256k1_ecdh.h>
-#include <secp256k1_preallocated.h>
-#include <secp256k1_recovery.h>
+#include "secp256k1.h"
+#include "secp256k1_ecdh.h"
+#include "secp256k1_preallocated.h"
+#include "secp256k1_recovery.h"
 // #include "secp256k1/src/secp256k1.c"
 
 static uint8_t typedarray_width(napi_typedarray_type type) {
@@ -34,6 +34,8 @@ napi_value sn_secp256k1_context_create (napi_env env, napi_callback_info info) {
 
   SN_ARGV_UINT32(flags, 0)
 
+  SN_THROWS(flags != SECP256K1_CONTEXT_VERIFY && flags != SECP256K1_CONTEXT_SIGN && flags != SECP256K1_CONTEXT_DECLASSIFY && flags != SECP256K1_CONTEXT_NONE, "must use one of the 'secp26k1_context'' flags")
+
   secp256k1_context *ctx = secp256k1_context_create(flags);
 
   napi_value buf;
@@ -47,9 +49,11 @@ napi_value sn_secp256k1_context_randomize (napi_env env, napi_callback_info info
   SN_ARGV(2, secp256k1_context_randomize)
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
-  SN_ARGV_TYPEDARRAY(seed32, 1)
+  SN_ARGV_OPTS_TYPEDARRAY(seed32, 1)
 
-  SN_THROWS(seed32_size != 32, "seed must be 'secp256k1_context_SEEDBYTES' bytes")
+  if (seed32_data) {
+    SN_THROWS(seed32_size != 32, "seed must be 'secp256k1_context_SEEDBYTES' bytes")
+  }
 
   SN_RETURN(secp256k1_context_randomize(ctx, seed32_data), "context could not be randomized")
 }
@@ -68,17 +72,16 @@ napi_value sn_secp256k1_ec_pubkey_serialize (napi_env env, napi_callback_info in
   SN_ARGV(4, secp256k1_ec_pubkey_serialize)
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
-  SN_ARGV_TYPEDARRAY_PTR(output, 2)
-  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
-  SN_ARGV_UINT8(flags, 3)
+  SN_ARGV_TYPEDARRAY(output, 1)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 2)
+  SN_ARGV_UINT32(flags, 3)
 
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
 
-  unsigned long len;
-  SN_CALL(secp256k1_ec_pubkey_serialize(ctx, output_data, &len, pubkey, flags), "pubkey could not be serialised")
+  SN_CALL(secp256k1_ec_pubkey_serialize(ctx, output_data, &output_size, pubkey, flags), "pubkey could not be serialised")
 
   napi_value result;
-  SN_STATUS_THROWS(napi_create_uint32(env, (uint32_t) len, &result), "")
+  SN_STATUS_THROWS(napi_create_uint32(env, (uint32_t) output_size, &result), "")
   return result;
 }
 
@@ -251,7 +254,7 @@ napi_value sn_secp256k1_ecdsa_signature_normalize (napi_env env, napi_callback_i
   SN_ARGV(3, secp256k1_ecdsa_signature_normalize)
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
-  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sigout, 2)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sigout, 1)
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sigin, 2)
 
   SN_THROWS(sigout_size != sizeof(secp256k1_ecdsa_signature), "sigout must be 'secp256k1_ecdsa_SIGBYTES' bytes")
@@ -302,10 +305,6 @@ napi_value sn_secp256k1_ecdsa_recoverable_signature_parse_compact (napi_env env,
   SN_THROWS(input64_size != 64, "input64 must be 'secp256k1_ecdsa_COMPACTBYTES' bytes")
 
   SN_RETURN(secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, sig, input64_data, recid), "signature could not be parsed")
-
-  // napi_value result;
-  // SN_STATUS_THROWS(napi_create_uint32(env, recid, &result), "")
-  // return result;
 }
 
 napi_value sn_secp256k1_ecdsa_recoverable_signature_serialize_compact (napi_env env, napi_callback_info info) {
@@ -360,9 +359,9 @@ napi_value sn_secp256k1_ecdsa_recover (napi_env env, napi_callback_info info) {
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 2)
-  SN_ARGV_TYPEDARRAY(msg32, 2)
+  SN_ARGV_TYPEDARRAY(msg32, 3)
 
-  SN_THROWS(pubkey_size != 32, "pubkey should be 'secp256k1_PUBKEYBYTES' bytes")
+  SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey should be 'secp256k1_PUBKEYBYTES' bytes")
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
   SN_THROWS(msg32_size != 32, "msg32 should be 'secp256k1_ecdsa_MSGBYTES' bytes")
 
@@ -392,6 +391,7 @@ static napi_value create_secp256k1_native(napi_env env) {
   SN_EXPORT_UINT32(secp256k1_SECKEYBYTES, 32)
   SN_EXPORT_UINT32(secp256k1_PUBKEYBYTES, sizeof(secp256k1_pubkey))
   SN_EXPORT_UINT32(secp256k1_ecdsa_SIGBYTES, sizeof(secp256k1_ecdsa_signature))
+  SN_EXPORT_UINT32(secp256k1_ecdsa_recoverable_SIGBYTES, sizeof(secp256k1_ecdsa_recoverable_signature))
   SN_EXPORT_UINT32(secp256k1_ecdsa_COMPACTBYTES, 64)
   SN_EXPORT_UINT32(secp256k1_ecdsa_MSGYBYTES, 32)
   SN_EXPORT_UINT32(secp256k1_context_VERIFY, SECP256K1_CONTEXT_VERIFY)
@@ -431,7 +431,6 @@ static napi_value create_secp256k1_native(napi_env env) {
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_recoverable_signature_convert, sn_secp256k1_ecdsa_recoverable_signature_convert)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_sign_recoverable, sn_secp256k1_ecdsa_sign_recoverable)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_recover, sn_secp256k1_ecdsa_recover)
-  SN_EXPORT_FUNCTION(secp256k1_ecdh, sn_secp256k1_ecdh)
   SN_EXPORT_FUNCTION(secp256k1_ecdh, sn_secp256k1_ecdh)
 
   return exports;

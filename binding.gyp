@@ -9,7 +9,8 @@
         'secp256k1/include'
       ],
       'sources': [
-        'binding.c'
+        'binding.c',
+        'secp256k1/src/modules/ecdh/main_impl.h'
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [

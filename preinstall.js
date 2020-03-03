@@ -116,7 +116,7 @@ function buildUnix (ext, cb) {
   if (fs.existsSync(res)) return cb(null, res)
 
   spawn('./autogen.sh', [], { cwd: dir, stdio: 'inherit' }, function (err) {
-    spawn('./configure', ['--prefix=' + tmp], { cwd: dir, stdio: 'inherit' }, function (err) {
+    spawn('./configure', ['--prefix=' + tmp, "--enable-module-recovery", "--enable-module-ecdh", "--enable-experimental"], { cwd: dir, stdio: 'inherit' }, function (err) {
       if (err) throw err
       spawn('make', ['clean'], { cwd: dir, stdio: 'inherit' }, function (err) {
         if (err) throw err
