@@ -290,6 +290,101 @@ napi_value sn_secp256k1_ecdsa_sign (napi_env env, napi_callback_info info) {
   SN_RETURN(secp256k1_ecdsa_sign(ctx, sig, msg32_data, seckey_data, NULL, NULL), "signature could not be generated")
 }
 
+napi_value sn_secp256k1_ecdsa_recoverable_signature_parse_compact (napi_env env, napi_callback_info info) {
+  SN_ARGV(4, secp256k1_ecdsa_recoverable_signature_parse_compact)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 1)
+  SN_ARGV_TYPEDARRAY(input64, 2)
+  SN_ARGV_UINT32(recid, 2)
+
+  SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
+  SN_THROWS(input64_size != 64, "input64 must be 'secp256k1_ecdsa_COMPACTBYTES' bytes")
+
+  SN_RETURN(secp256k1_ecdsa_recoverable_signature_parse_compact(ctx, sig, input64_data, recid), "signature could not be parsed")
+
+  // napi_value result;
+  // SN_STATUS_THROWS(napi_create_uint32(env, recid, &result), "")
+  // return result;
+}
+
+napi_value sn_secp256k1_ecdsa_recoverable_signature_serialize_compact (napi_env env, napi_callback_info info) {
+  SN_ARGV(4, secp256k1_ecdsa_recoverable_signature_serialize_compact)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_TYPEDARRAY(output64, 1)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 3)
+
+  SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
+  SN_THROWS(output64_size != 64, "output must be 'secp256k1_ecdsa_COMPACTBYTES'")
+
+  int recid;
+  SN_CALL(secp256k1_ecdsa_recoverable_signature_serialize_compact(ctx, output64_data, &recid, sig), "could not serialise signature")
+
+  napi_value result;
+  SN_STATUS_THROWS(napi_create_uint32(env, (uint32_t) recid, &result), "")
+  return result;
+}
+
+napi_value sn_secp256k1_ecdsa_recoverable_signature_convert (napi_env env, napi_callback_info info) {
+  SN_ARGV(3, secp256k1_ecdsa_recoverable_signature_convert)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sig, 1)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sigin, 2)
+
+  SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_signature), "sig must be 'secp256k1_ecdsa_SIGBYTES' bytes")
+  SN_THROWS(sigin_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
+
+  SN_RETURN(secp256k1_ecdsa_recoverable_signature_convert(ctx, sig, sigin), "could not convert signature")
+}
+
+napi_value sn_secp256k1_ecdsa_sign_recoverable (napi_env env, napi_callback_info info) {
+  SN_ARGV(4, secp256k1_ecdsa_sign_recoverable)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 1)
+  SN_ARGV_TYPEDARRAY(msg32, 2)
+  SN_ARGV_TYPEDARRAY(seckey, 3)
+
+  SN_THROWS(seckey_size != 32, "seckey should be 'secp256k1_SECKEYBYTES' bytes")
+  SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
+  SN_THROWS(msg32_size != 32, "msg32 should be 'secp256k1_ecdsa_MSGBYTES' bytes")
+
+  SN_RETURN(secp256k1_ecdsa_sign_recoverable(ctx, sig, msg32_data, seckey_data, NULL, NULL), "signature could not be generated")
+}
+
+napi_value sn_secp256k1_ecdsa_recover (napi_env env, napi_callback_info info) {
+  SN_ARGV(4, secp256k1_ecdsa_recover)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 2)
+  SN_ARGV_TYPEDARRAY(msg32, 2)
+
+  SN_THROWS(pubkey_size != 32, "pubkey should be 'secp256k1_PUBKEYBYTES' bytes")
+  SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
+  SN_THROWS(msg32_size != 32, "msg32 should be 'secp256k1_ecdsa_MSGBYTES' bytes")
+
+  SN_RETURN(secp256k1_ecdsa_recover(ctx, pubkey, sig, msg32_data), "public key could not be recovered")
+}
+
+napi_value sn_secp256k1_ecdh (napi_env env, napi_callback_info info) {
+  SN_ARGV(5, secp256k1_ecdh)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_TYPEDARRAY(output, 1)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, point, 2)
+  SN_ARGV_TYPEDARRAY(scalar, 3)
+  SN_ARGV_OPTS_TYPEDARRAY_PTR(data, 4)
+
+  SN_THROWS(output_size != 32, "output should be 'secp256k1_ecdh_BYTES' bytes")
+  SN_THROWS(point_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
+  SN_THROWS(scalar_size != 32, "scalar should be 'secp256k1_ecdh_SCALARBYTES' bytes")
+
+  SN_RETURN(secp256k1_ecdh(ctx, output_data, point, scalar_data, NULL, data), "ecdh could not be completed")
+}
+
 static napi_value create_secp256k1_native(napi_env env) {
   napi_value exports;
   assert(napi_create_object(env, &exports) == napi_ok);
@@ -331,6 +426,13 @@ static napi_value create_secp256k1_native(napi_env env) {
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_normalize, sn_secp256k1_ecdsa_signature_normalize)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_verify, sn_secp256k1_ecdsa_verify)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_sign, sn_secp256k1_ecdsa_sign)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_recoverable_signature_parse_compact, sn_secp256k1_ecdsa_recoverable_signature_parse_compact)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_recoverable_signature_serialize_compact, sn_secp256k1_ecdsa_recoverable_signature_serialize_compact)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_recoverable_signature_convert, sn_secp256k1_ecdsa_recoverable_signature_convert)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_sign_recoverable, sn_secp256k1_ecdsa_sign_recoverable)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_recover, sn_secp256k1_ecdsa_recover)
+  SN_EXPORT_FUNCTION(secp256k1_ecdh, sn_secp256k1_ecdh)
+  SN_EXPORT_FUNCTION(secp256k1_ecdh, sn_secp256k1_ecdh)
 
   return exports;
 }

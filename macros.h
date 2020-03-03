@@ -77,6 +77,21 @@
   uint8_t name##_width = typedarray_width(name##_type); \
   SN_THROWS(name##_width == 0, "Unexpected TypedArray type.")
 
+#define SN_OPT_TYPEDARRAY(name, var) \
+  napi_typedarray_type name##_type; \
+  size_t name##_length; \
+  assert(napi_get_typedarray_info(env, (var), &name##_type, &name##_length, &name##_data, NULL, NULL) == napi_ok); \
+  uint8_t name##_width = typedarray_width(name##_type); \
+  SN_THROWS(name##_width == 0, "Unexpected TypedArray type") \
+  name##_size = name##_length * name##_width;
+
+#define SN_OPT_TYPEDARRAY_PTR(name, var) \
+  napi_typedarray_type name##_type; \
+  size_t name##_length; \
+  assert(napi_get_typedarray_info(env, (var), &name##_type, &name##_length, &name, NULL, NULL) == napi_ok); \
+  uint8_t name##_width = typedarray_width(name##_type); \
+  SN_THROWS(name##_width == 0, "Unexpected TypedArray type") \
+
 #define SN_BUFFER_CAST(type, name, val) \
   type name; \
   size_t name##_size; \
@@ -101,6 +116,27 @@
   napi_value name##_argv = argv[index]; \
   SN_TYPEDARRAY_ASSERT(name, name##_argv, #name " must be an instance of TypedArray") \
   SN_TYPEDARRAY_PTR(name, name##_argv)
+
+#define SN_ARGV_OPTS_TYPEDARRAY(name, index) \
+  napi_valuetype name##_valuetype; \
+  void *name##_data = NULL; \
+  size_t name##_size = 0; \
+  SN_STATUS_THROWS(napi_typeof(env, argv[index], &name##_valuetype), "") \
+  if (name##_valuetype != napi_null) { \
+    napi_value name##_argv = argv[index]; \
+    SN_TYPEDARRAY_ASSERT(name, name##_argv, #name " must be an instance of TypedArray") \
+    SN_OPT_TYPEDARRAY(name, name##_argv) \
+  }
+
+  #define SN_ARGV_OPTS_TYPEDARRAY_PTR(name, index) \
+  napi_valuetype name##_valuetype; \
+  void *name = NULL; \
+  SN_STATUS_THROWS(napi_typeof(env, argv[index], &name##_valuetype), "") \
+  if (name##_valuetype != napi_null) { \
+    napi_value name##_argv = argv[index]; \
+    SN_TYPEDARRAY_ASSERT(name, name##_argv, #name " must be an instance of TypedArray") \
+    SN_OPT_TYPEDARRAY_PTR(name, name##_argv) \
+  }
 
 #define SN_ARGV_BUFFER_CAST(type, name, index) \
   napi_value name##_argv = argv[index]; \
