@@ -44,6 +44,15 @@
 #define SN_ASSERT_MAX_LENGTH(length, constant, name) \
   SN_THROWS(length > constant, #name " must be at most " #constant " bytes long")
 
+#define SN_UINT8(name, val) \
+  uint32_t name##_int32; \
+  if (napi_get_value_uint32(env, val, &name##_int32) != napi_ok) { \
+    napi_throw_error(env, "EINVAL", "Expected number"); \
+    return NULL; \
+  } \
+  SN_THROWS(name##_int32 > 255, "expect uint8") \
+  unsigned char name = 0xff & name##_int32;
+
 #define SN_UINT32(name, var) \
   uint32_t name; \
   if (napi_get_value_uint32(env, var, &name) != napi_ok) { \
@@ -72,6 +81,11 @@
   type name; \
   size_t name##_size; \
   SN_STATUS_THROWS(napi_get_buffer_info(env, val, (void**) &name, &name##_size), "")
+
+#define SN_ARGV_UINT8(name, index) \
+  napi_value name##_argv = argv[index]; \
+  SN_TYPE_ASSERT(name, name##_argv, napi_number, #name " must be an instance of Number") \
+  SN_UINT8(name, name##_argv)
 
 #define SN_ARGV_UINT32(name, index) \
   napi_value name##_argv = argv[index]; \
@@ -105,6 +119,10 @@
     SN_STATUS_THROWS(napi_create_function(env, #name, NAPI_AUTO_LENGTH, cb, NULL, &name##_fn), "") \
     SN_STATUS_THROWS(napi_set_named_property(env, exports, #name, name##_fn), "") \
   }
+
+#define SN_CALL(call, message) \
+  int success = call; \
+  SN_THROWS(success != 0, message)
 
 #define SN_RETURN(call, message) \
   int success = call; \

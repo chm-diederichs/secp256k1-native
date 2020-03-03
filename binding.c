@@ -25,13 +25,94 @@ static uint8_t typedarray_width(napi_typedarray_type type) {
   }
 }
 
+static void sn_secp256k1_context_preallocated_destroy (napi_env env, void* finalise_data, void* finalise_hint) {
+  secp256k1_context_preallocated_destroy(finalise_data);
+}
+
+napi_value sn_secp256k1_context_create (napi_env env, napi_callback_info info) {
+  SN_ARGV(1, secp256_context_create)
+
+  SN_ARGV_UINT32(flags, 0)
+
+  secp256k1_context *ctx = secp256k1_context_create(flags);
+
+  napi_value buf;
+
+  SN_STATUS_THROWS(napi_create_external_buffer(env, sizeof(ctx), ctx, &sn_secp256k1_context_preallocated_destroy, NULL, &buf), "failed to create a n-api buffer")
+
+  return buf;
+}
+
+napi_value sn_secp256k1_context_randomize (napi_env env, napi_callback_info info) {
+  SN_ARGV(2, secp256k1_context_randomize)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_TYPEDARRAY(seed32, 1)
+
+  SN_THROWS(seed32_size != 32, "seed must be 'secp256k1_context_SEEDBYTES' bytes")
+
+  SN_RETURN(secp256k1_context_randomize(ctx, seed32_data), "context could not be randomized")
+}
+
+napi_value sn_secp256k1_ec_pubkey_parse (napi_env env, napi_callback_info info) {
+  SN_ARGV(3, secp256k1_ec_pubkey_parse)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
+  SN_ARGV_TYPEDARRAY(input, 2)
+
+  SN_RETURN(secp256k1_ec_pubkey_parse(ctx, pubkey, input_data, input_size), "pubkey could not be parsed")
+}
+
+napi_value sn_secp256k1_ec_pubkey_serialize (napi_env env, napi_callback_info info) {
+  SN_ARGV(4, secp256k1_ec_pubkey_serialize)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_TYPEDARRAY_PTR(output, 2)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
+  SN_ARGV_UINT8(flags, 3)
+
+  SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
+
+  unsigned long len;
+  SN_CALL(secp256k1_ec_pubkey_serialize(ctx, output_data, &len, pubkey, flags), "pubkey could not be serialised")
+
+  napi_value result;
+  SN_STATUS_THROWS(napi_create_uint32(env, (uint32_t) len, &result), "")
+  return result;
+}
+
 napi_value sn_secp256k1_ec_seckey_verify (napi_env env, napi_callback_info info) {
   SN_ARGV(2, secp256k1_ec_seckey_verify)
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(seckey, 1)
 
+  SN_THROWS(seckey_size != 32, "seckey should be 'secp256k1_SECKEYBYTES' bytes")
+
   SN_RETURN_BOOLEAN_FROM_1(secp256k1_ec_seckey_verify(ctx, seckey_data))
+}
+
+napi_value sn_secp256k1_ec_privkey_negate (napi_env env, napi_callback_info info) {
+  SN_ARGV(2, secp256k1_ec_privkey_negate)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_TYPEDARRAY(seckey, 1)
+
+  SN_THROWS(seckey_size != 32, "seckey should be 'secp256k1_SECKEYBYTES' bytes")
+
+  SN_RETURN(secp256k1_ec_privkey_negate(ctx, seckey_data), "privkey could not be negated")
+}
+
+napi_value sn_secp256k1_ec_pubkey_negate (napi_env env, napi_callback_info info) {
+  SN_ARGV(2, secp256k1_ec_pubkey_negate)
+
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
+
+  SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
+
+  SN_RETURN(secp256k1_ec_pubkey_negate(ctx, pubkey), "pubkey could not be negated")
 }
 
 napi_value sn_secp256k1_ec_pubkey_create (napi_env env, napi_callback_info info) {
@@ -41,7 +122,7 @@ napi_value sn_secp256k1_ec_pubkey_create (napi_env env, napi_callback_info info)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
   SN_ARGV_TYPEDARRAY(seckey, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
+  SN_THROWS(seckey_size != 32, "seckey should be 'secp256k1_SECKEYBYTES' bytes")
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_pubkey_create(ctx, pubkey, seckey_data), "could not generate public key")
@@ -52,9 +133,8 @@ napi_value sn_secp256k1_ec_privkey_tweak_add (napi_env env, napi_callback_info i
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(seckey, 1)
-  SN_ARGV_TYPEDARRAY(tweak, 2)
+  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
   SN_THROWS(seckey_size != 32, "pubkey must be 'secp256k1_SECKEYBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_privkey_tweak_add(ctx, seckey_data, tweak_data), "could not generate public key")
@@ -65,9 +145,8 @@ napi_value sn_secp256k1_ec_pubkey_tweak_add (napi_env env, napi_callback_info in
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
-  SN_ARGV_TYPEDARRAY(tweak, 2)
+  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_pubkey_tweak_add(ctx, pubkey, tweak_data), "could not generate public key")
@@ -78,9 +157,8 @@ napi_value sn_secp256k1_ec_privkey_tweak_mul (napi_env env, napi_callback_info i
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(seckey, 1)
-  SN_ARGV_TYPEDARRAY(tweak, 2)
+  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
   SN_THROWS(seckey_size != 32, "pubkey must be 'secp256k1_SECKEYBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_privkey_tweak_mul(ctx, seckey_data, tweak_data), "could not generate public key")
@@ -91,9 +169,8 @@ napi_value sn_secp256k1_ec_pubkey_tweak_mul (napi_env env, napi_callback_info in
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
-  SN_ARGV_TYPEDARRAY(tweak, 2)
+  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_pubkey_tweak_mul(ctx, pubkey, tweak_data), "could not generate public key")
@@ -119,28 +196,17 @@ napi_value sn_secp256k1_ec_pubkey_combine (napi_env env, napi_callback_info info
     pubkeys[i] = pubkey;
   }
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
-
   SN_RETURN(secp256k1_ec_pubkey_combine(ctx, pubnonce, pubkeys, batch_length), "could not combine public keys")
 }
 
-static void sn_secp256k1_context_preallocated_destroy (napi_env env, void* finalise_data, void* finalise_hint) {
-  secp256k1_context_preallocated_destroy(finalise_data);
-}
+napi_value sn_secp256k1_ecdsa_signature_parse_der (napi_env env, napi_callback_info info) {
+  SN_ARGV(3, secp256k1_ecdsa_signature_parse_der)
 
-napi_value sn_secp256k1_context_create (napi_env env, napi_callback_info info) {
-  SN_ARGV(1, secp256_context_create)
+  SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sig, 1)
+  SN_ARGV_TYPEDARRAY(input, 2)
 
-  SN_ARGV_UINT32(flags, 0)
-
-  secp256k1_context *ctx = secp256k1_context_create(flags);
-  printf("%d\n", ctx);
-
-  napi_value buf;
-
-  SN_STATUS_THROWS(napi_create_external_buffer(env, sizeof(ctx), ctx, &sn_secp256k1_context_preallocated_destroy, NULL, &buf), "failed to create a n-api buffer")
-
-  return buf;
+  SN_RETURN(secp256k1_ecdsa_signature_parse_der(ctx, sig, input_data, input_size), "signature could not be parsed")
 }
 
 napi_value sn_secp256k1_ecdsa_signature_parse_compact (napi_env env, napi_callback_info info) {
@@ -163,7 +229,6 @@ napi_value sn_secp256k1_ecdsa_signature_serialize_der (napi_env env, napi_callba
   SN_ARGV_TYPEDARRAY(output, 1)
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sig, 2)
 
-  // SN_ASSERT_LENGTH(ctx_size, sizeof(secp256k1_context), ctx)
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_signature), "sig must be 'secp256k1_ecdsa_SIGBYTES' bytes")
 
   SN_RETURN(secp256k1_ecdsa_signature_serialize_der(ctx, output_data, &output_size, sig), "could not serialise signature")
@@ -176,7 +241,6 @@ napi_value sn_secp256k1_ecdsa_signature_serialize_compact (napi_env env, napi_ca
   SN_ARGV_TYPEDARRAY(output64, 1)
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sig, 2)
 
-  // SN_THROWS(ctx_size != sizeof(secp256k1_context), "ctx must be 'secp256k1_CONTEXTBYTES' bytes")
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_signature), "sig must be 'secp256k1_ecdsa_SIGBYTES' bytes")
   SN_THROWS(output64_size != 64, "output must be 'secp256k1_ecdsa_COMPACTBYTES'")
 
@@ -190,7 +254,6 @@ napi_value sn_secp256k1_ecdsa_signature_normalize (napi_env env, napi_callback_i
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sigout, 2)
   SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_signature *, sigin, 2)
 
-  // SN_THROWS(ctx_size != sizeof(secp256k1_context), "ctx must be 'secp256k1_CONTEXTBYTES' bytes")
   SN_THROWS(sigout_size != sizeof(secp256k1_ecdsa_signature), "sigout must be 'secp256k1_ecdsa_SIGBYTES' bytes")
   SN_THROWS(sigin_size != sizeof(secp256k1_ecdsa_signature), "sigin must be 'secp256k1_ecdsa_SIGBYTES' bytes")
 
@@ -205,7 +268,6 @@ napi_value sn_secp256k1_ecdsa_verify (napi_env env, napi_callback_info info) {
   SN_ARGV_TYPEDARRAY(msg32, 2)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 3)
 
-  // SN_THROWS(ctx_size != sizeof(secp256k1_context), "ctx must be 'secp256k1_CONTEXTBYTES' bytes")
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_signature), "sig must be 'secp256k1_ecdsa_SIGBYTES' bytes")
   SN_THROWS(msg32_size != 32, "msg32 should be 'secp256k1_ecdsa_MSGBYTES' bytes")
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
@@ -221,7 +283,7 @@ napi_value sn_secp256k1_ecdsa_sign (napi_env env, napi_callback_info info) {
   SN_ARGV_TYPEDARRAY(msg32, 2)
   SN_ARGV_TYPEDARRAY(seckey, 3)
 
-  // SN_THROWS(ctx_size != sizeof(secp256k1_context), "ctx must be 'secp256k1_CONTEXTBYTES' bytes")
+  SN_THROWS(seckey_size != 32, "seckey should be 'secp256k1_SECKEYBYTES' bytes")
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_signature), "sig must be 'secp256k1_ecdsa_SIGBYTES' bytes")
   SN_THROWS(msg32_size != 32, "msg32 should be 'secp256k1_ecdsa_MSGBYTES' bytes")
 
@@ -232,19 +294,38 @@ static napi_value create_secp256k1_native(napi_env env) {
   napi_value exports;
   assert(napi_create_object(env, &exports) == napi_ok);
 
-  // SN_EXPORT_UINT32(secp256k1_CONTEXTBYTES, sizeof(secp256k1_context))
+  SN_EXPORT_UINT32(secp256k1_SECKEYBYTES, 32)
   SN_EXPORT_UINT32(secp256k1_PUBKEYBYTES, sizeof(secp256k1_pubkey))
   SN_EXPORT_UINT32(secp256k1_ecdsa_SIGBYTES, sizeof(secp256k1_ecdsa_signature))
   SN_EXPORT_UINT32(secp256k1_ecdsa_COMPACTBYTES, 64)
+  SN_EXPORT_UINT32(secp256k1_ecdsa_MSGYBYTES, 32)
+  SN_EXPORT_UINT32(secp256k1_context_VERIFY, SECP256K1_CONTEXT_VERIFY)
+  SN_EXPORT_UINT32(secp256k1_context_SIGN, SECP256K1_CONTEXT_SIGN)
+  SN_EXPORT_UINT32(secp256k1_context_DECLASSIFY, SECP256K1_CONTEXT_DECLASSIFY)
+  SN_EXPORT_UINT32(secp256k1_context_NONE, SECP256K1_CONTEXT_NONE)
+  SN_EXPORT_UINT32(secp256k1_ec_COMPRESSED, SECP256K1_EC_COMPRESSED)
+  SN_EXPORT_UINT32(secp256k1_ec_UNCOMPRESSED, SECP256K1_EC_UNCOMPRESSED)
+  SN_EXPORT_UINT32(secp256k1_tag_pubkey_EVEN, SECP256K1_TAG_PUBKEY_EVEN)
+  SN_EXPORT_UINT32(secp256k1_tag_pubkey_ODD, SECP256K1_TAG_PUBKEY_ODD)
+  SN_EXPORT_UINT32(secp256k1_tag_pubkey_UNCOMPRESSED, SECP256K1_TAG_PUBKEY_UNCOMPRESSED)
+  SN_EXPORT_UINT32(secp256k1_tag_pubkey_HYBRID_EVEN, SECP256K1_TAG_PUBKEY_HYBRID_EVEN)
+  SN_EXPORT_UINT32(secp256k1_tag_pubkey_HYBRID_ODD, SECP256K1_TAG_PUBKEY_HYBRID_ODD)
 
   SN_EXPORT_FUNCTION(secp256k1_context_create, sn_secp256k1_context_create)
-  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_tweak_add, sn_secp256k1_ec_pubkey_tweak_add)
-  SN_EXPORT_FUNCTION(secp256k1_ec_privkey_tweak_add, sn_secp256k1_ec_privkey_tweak_add)
-  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_tweak_mul, sn_secp256k1_ec_pubkey_tweak_mul)
-  SN_EXPORT_FUNCTION(secp256k1_ec_privkey_tweak_mul, sn_secp256k1_ec_privkey_tweak_mul)
+  SN_EXPORT_FUNCTION(secp256k1_context_randomize, sn_secp256k1_context_randomize)
   SN_EXPORT_FUNCTION(secp256k1_ec_seckey_verify, sn_secp256k1_ec_seckey_verify)
   SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_create, sn_secp256k1_ec_pubkey_create)
+  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_parse, sn_secp256k1_ec_pubkey_parse)
+  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_serialize, sn_secp256k1_ec_pubkey_serialize)
+  SN_EXPORT_FUNCTION(secp256k1_ec_privkey_negate, sn_secp256k1_ec_privkey_negate)
+  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_negate, sn_secp256k1_ec_pubkey_negate)
+  SN_EXPORT_FUNCTION(secp256k1_ec_privkey_tweak_add, sn_secp256k1_ec_privkey_tweak_add)
+  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_tweak_add, sn_secp256k1_ec_pubkey_tweak_add)
+  SN_EXPORT_FUNCTION(secp256k1_ec_privkey_tweak_mul, sn_secp256k1_ec_privkey_tweak_mul)
+  SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_tweak_mul, sn_secp256k1_ec_pubkey_tweak_mul)
   SN_EXPORT_FUNCTION(secp256k1_ec_pubkey_combine, sn_secp256k1_ec_pubkey_combine)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_parse_der, sn_secp256k1_ecdsa_signature_parse_der)
+  SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_parse_compact, sn_secp256k1_ecdsa_signature_parse_compact)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_serialize_der, sn_secp256k1_ecdsa_signature_serialize_der)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_serialize_compact, sn_secp256k1_ecdsa_signature_serialize_compact)
   SN_EXPORT_FUNCTION(secp256k1_ecdsa_signature_normalize, sn_secp256k1_ecdsa_signature_normalize)
