@@ -6,6 +6,7 @@ const secp256k1 = require('./')
 test('check constants', function (t) {
   t.equal(secp256k1.secp256k1_SECKEYBYTES, 32, 'secp256k1_SECKEYBYTES')
   t.equal(secp256k1.secp256k1_PUBKEYBYTES, 64, 'secp256k1_PUBKEYBYTES')
+  t.equal(secp256k1.secp256k1_ec_TWEAKBYTES, 32, 'secp256k1_ec_TWEAKBYTES')
   t.equal(secp256k1.secp256k1_ecdsa_SIGBYTES, 64, 'secp256k1_ecdsa_SIGBYTES')
   t.equal(secp256k1.secp256k1_ecdsa_recoverable_SIGBYTES, 65, 'secp256k1_ecdsa_SIGBYTES')
   t.equal(secp256k1.secp256k1_ecdsa_COMPACTBYTES, 64, 'secp256k1_ecdsa_COMPACTBYTES')
@@ -113,35 +114,10 @@ test('ec pubkey', t => {
   t.end()
 })
 
-
-test('ec pubkey', t => {
-  var ctx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_SIGN)
-
-  const pubkey = Buffer.alloc(64)
-  const pubkeyFromRaw = Buffer.alloc(64)
-  const pubkeySerialise = Buffer.alloc(65)
-  const privKey = Buffer.from('c70df8568f2c56f38a68049608fccfff9a46fc0991f11b12ac4759f5c067f9e7', 'hex')
-  const expect = Buffer.from('04611e760c3adf5452217943797d57b8ec95253a5d6daf2dc8e7e95eeb2db69c53381d4519eb0bb4d0e15af982393f2b3104370573cd7ad897dee2baddd623ec99', 'hex')
-  const badPrivKey = Buffer.alloc(32, 0xff)
-
-  t.throws(() => secp256k1.secp256k1_ec_pubkey_create(ctx, pubkey, badPrivKey))
-  t.doesNotThrow(() => secp256k1.secp256k1_ec_pubkey_create(ctx, pubkey, privKey))
-  t.doesNotThrow(() => secp256k1.secp256k1_ec_pubkey_serialize(ctx, pubkeySerialise, pubkey, secp256k1.secp256k1_ec_UNCOMPRESSED))
-  t.doesNotThrow(() => secp256k1.secp256k1_ec_pubkey_parse(ctx, pubkeyFromRaw, expect))
-
-  t.same(pubkeyFromRaw, pubkey)
-  t.same(pubkeySerialise, expect)
-
-  var buf = Buffer.alloc(1000)
-  var bytesWritten = secp256k1.secp256k1_ec_pubkey_serialize(ctx, buf.subarray(700), pubkey, secp256k1.secp256k1_ec_UNCOMPRESSED)
-  t.same(buf.subarray(700, 700 + bytesWritten), expect)
-
-  t.end()
-})
-
-test.only('ec key vectors', t => {
+test('ec key vectors', t => {
   var signCtx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_SIGN)
   var verifyCtx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_VERIFY)
+  var noneCtx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_NONE)
   
   for (let vector of vectors.pubkey) {
     const privkey = Buffer.from(vector.privkey, 'hex')
@@ -211,7 +187,7 @@ test.only('ec key vectors', t => {
     pubkey64.set(pubkey)
     privkey32.set(privkey)
 
-    secp256k1.secp256k1_ec_privkey_tweak_add(verifyCtx, privkey32, tweak)
+    secp256k1.secp256k1_ec_privkey_tweak_add(signCtx, privkey32, tweak)
     secp256k1.secp256k1_ec_pubkey_tweak_add(verifyCtx, pubkey64, tweak)
     secp256k1.secp256k1_ec_pubkey_serialize(verifyCtx, pubkey33, pubkey64, secp256k1.secp256k1_ec_COMPRESSED)
     secp256k1.secp256k1_ec_pubkey_create(signCtx, pubkeyCheck, privkey32)
@@ -224,7 +200,7 @@ test.only('ec key vectors', t => {
     pubkey64.set(pubkey)
     privkey32.set(privkey)
 
-    secp256k1.secp256k1_ec_privkey_tweak_mul(verifyCtx, privkey32, tweak)
+    secp256k1.secp256k1_ec_privkey_tweak_mul(signCtx, privkey32, tweak)
     secp256k1.secp256k1_ec_pubkey_tweak_mul(verifyCtx, pubkey64, tweak)
     secp256k1.secp256k1_ec_pubkey_serialize(verifyCtx, pubkey33, pubkey64, secp256k1.secp256k1_ec_COMPRESSED)
     secp256k1.secp256k1_ec_pubkey_create(signCtx, pubkeyCheck, privkey32)

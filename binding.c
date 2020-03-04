@@ -76,6 +76,9 @@ napi_value sn_secp256k1_ec_pubkey_serialize (napi_env env, napi_callback_info in
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 2)
   SN_ARGV_UINT32(flags, 3)
 
+  size_t min_len = flags == SECP256K1_EC_COMPRESSED ? 33 : 65;
+
+  SN_THROWS(output_size < min_len, "output buffer must be at least 33/65 bytes for compressed/uncompressed serialisation")
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
 
   SN_CALL(secp256k1_ec_pubkey_serialize(ctx, output_data, &output_size, pubkey, flags), "pubkey could not be serialised")
@@ -136,9 +139,10 @@ napi_value sn_secp256k1_ec_privkey_tweak_add (napi_env env, napi_callback_info i
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(seckey, 1)
-  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
+  SN_ARGV_TYPEDARRAY(tweak, 2)
 
   SN_THROWS(seckey_size != 32, "pubkey must be 'secp256k1_SECKEYBYTES' bytes")
+  SN_THROWS(tweak_size != 32, "tweak must be 'secp256k1_ec_TWEAKBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_privkey_tweak_add(ctx, seckey_data, tweak_data), "could not generate public key")
 }
@@ -148,9 +152,10 @@ napi_value sn_secp256k1_ec_pubkey_tweak_add (napi_env env, napi_callback_info in
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
-  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
+  SN_ARGV_TYPEDARRAY(tweak, 2)
 
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
+  SN_THROWS(tweak_size != 32, "tweak must be 'secp256k1_ec_TWEAKBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_pubkey_tweak_add(ctx, pubkey, tweak_data), "could not generate public key")
 }
@@ -160,9 +165,10 @@ napi_value sn_secp256k1_ec_privkey_tweak_mul (napi_env env, napi_callback_info i
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(seckey, 1)
-  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
+  SN_ARGV_TYPEDARRAY(tweak, 2)
 
   SN_THROWS(seckey_size != 32, "pubkey must be 'secp256k1_SECKEYBYTES' bytes")
+  SN_THROWS(tweak_size != 32, "tweak must be 'secp256k1_ec_TWEAKBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_privkey_tweak_mul(ctx, seckey_data, tweak_data), "could not generate public key")
 }
@@ -172,9 +178,10 @@ napi_value sn_secp256k1_ec_pubkey_tweak_mul (napi_env env, napi_callback_info in
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_BUFFER_CAST(secp256k1_pubkey *, pubkey, 1)
-  SN_ARGV_TYPEDARRAY_PTR(tweak, 2)
+  SN_ARGV_TYPEDARRAY(tweak, 2)
 
   SN_THROWS(pubkey_size != sizeof(secp256k1_pubkey), "pubkey must be 'secp256k1_PUBKEYBYTES' bytes")
+  SN_THROWS(tweak_size != 32, "tweak must be 'secp256k1_ec_TWEAKBYTES' bytes")
 
   SN_RETURN(secp256k1_ec_pubkey_tweak_mul(ctx, pubkey, tweak_data), "could not generate public key")
 }
@@ -260,7 +267,7 @@ napi_value sn_secp256k1_ecdsa_signature_normalize (napi_env env, napi_callback_i
   SN_THROWS(sigout_size != sizeof(secp256k1_ecdsa_signature), "sigout must be 'secp256k1_ecdsa_SIGBYTES' bytes")
   SN_THROWS(sigin_size != sizeof(secp256k1_ecdsa_signature), "sigin must be 'secp256k1_ecdsa_SIGBYTES' bytes")
 
-  SN_RETURN(secp256k1_ecdsa_signature_normalize(ctx, sigout, sigin), "could not serialise signature")
+  SN_RETURN_BOOLEAN_FROM_1(secp256k1_ecdsa_signature_normalize(ctx, sigout, sigin))
 }
 
 napi_value sn_secp256k1_ecdsa_verify (napi_env env, napi_callback_info info) {
@@ -308,11 +315,11 @@ napi_value sn_secp256k1_ecdsa_recoverable_signature_parse_compact (napi_env env,
 }
 
 napi_value sn_secp256k1_ecdsa_recoverable_signature_serialize_compact (napi_env env, napi_callback_info info) {
-  SN_ARGV(4, secp256k1_ecdsa_recoverable_signature_serialize_compact)
+  SN_ARGV(3, secp256k1_ecdsa_recoverable_signature_serialize_compact)
 
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_TYPEDARRAY(output64, 1)
-  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 3)
+  SN_ARGV_BUFFER_CAST(secp256k1_ecdsa_recoverable_signature *, sig, 2)
 
   SN_THROWS(sig_size != sizeof(secp256k1_ecdsa_recoverable_signature), "sig must be 'secp256k1_ecdsa_recoverable_SIGBYTES' bytes")
   SN_THROWS(output64_size != 64, "output must be 'secp256k1_ecdsa_COMPACTBYTES'")
@@ -389,6 +396,7 @@ static napi_value create_secp256k1_native(napi_env env) {
   assert(napi_create_object(env, &exports) == napi_ok);
 
   SN_EXPORT_UINT32(secp256k1_SECKEYBYTES, 32)
+  SN_EXPORT_UINT32(secp256k1_ec_TWEAKBYTES, 32)
   SN_EXPORT_UINT32(secp256k1_PUBKEYBYTES, sizeof(secp256k1_pubkey))
   SN_EXPORT_UINT32(secp256k1_ecdsa_SIGBYTES, sizeof(secp256k1_ecdsa_signature))
   SN_EXPORT_UINT32(secp256k1_ecdsa_recoverable_SIGBYTES, sizeof(secp256k1_ecdsa_recoverable_signature))
