@@ -1,16 +1,24 @@
 {
   "name": "secp256k1",
   "version": "0.0.0",
-  "description": "",
+  "description": "Low level bindings for bitcoin's secp256k1 library",
   "main": "index.js",
   "scripts": {
     "fetch-secp256k1": "git submodule update --recursive --init",
     "install": "node-gyp-build \"node preinstall.js\" \"node postinstall.js\"",
-    "test": "node test"
+    "test": "node test",
+    "prebuild": "prebuildify --napi --strip --preinstall \"node preinstall.js\" --postinstall \"node postinstall.js\"",
+    "prebuild-ia32": "prebuildify --arch=ia32 --napi --strip --preinstall \"node preinstall.js\" --postinstall \"node postinstall.js\""
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "node-gyp": "^6.1.0",
+    "prebuildify": "^3.0.4",
     "tape": "^4.13.2"
+  },
+  "dependencies": {
+    "ini": "^1.3.5",
+    "node-gyp-build": "^4.2.1"
   }
 }

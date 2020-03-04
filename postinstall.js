@@ -53,7 +53,7 @@ function buildDarwin () {
   if (fs.existsSync(dst)) return
   copy(lib, dst, function (err) {
     if (err) throw err
-    proc.exec('install_name_tool -id "@loader_path/libsecp256k1.dylib" libsecp256k1-' + arch + '.dylib', { cwd: build }, function (err) {
+    proc.exec('install_name_tool -id "@loader_path/libsecp256k1.dylib" libsecp256k1.dylib', { cwd: build }, function (err) {
       if (err) throw err
       proc.exec('install_name_tool -change "' + lib + '" "@loader_path/libsecp256k1.dylib" secp256k1.node', { cwd: build }, function (err) {
         if (err) throw err
