@@ -1,4 +1,5 @@
 # secp256k1-native
+[![Build Status](https://travis-ci.org/chm-diederichs/secp256k1-native.svg?branch=master)](https://travis-ci.org/chm-diederichs/secp256k1-native)
 
 Low-level bindings for bitcoin's secp256k1 elliptic curve [library](https://github.com/bitcoin-core/secp256k1).
 
