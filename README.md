@@ -33,13 +33,13 @@ console.log('signature is', result)
 
 ### Constants
 
-[-]`secp256k1_SECKEYBYTES = 32`
-[-]`secp256k1_PUBKEYBYTES = 64`
-[-]`secp256k1_ec_TWEAKBYTES = 32`
-[-]`secp256k1_ecdsa_SIGBYTES = 64`
-[-]`secp256k1_ecdsa_recoverable_SIGBYTES = 65`
-[-]`secp256k1_ecdsa_COMPACTBYTES = 64`
-[-]`secp256k1_ecdsa_MSGYBYTES = 32`
+- `secp256k1_SECKEYBYTES = 32`
+- `secp256k1_PUBKEYBYTES = 64`
+- `secp256k1_ec_TWEAKBYTES = 32`
+- `secp256k1_ecdsa_SIGBYTES = 64`
+- `secp256k1_ecdsa_recoverable_SIGBYTES = 65`
+- `secp256k1_ecdsa_COMPACTBYTES = 64`
+- `secp256k1_ecdsa_MSGYBYTES = 32`
 
 ### Context
 
@@ -50,10 +50,10 @@ A context is needed in order to store blinding fators used to protect against si
 Create a new context in order to protect from side-channel attacks. Returns ctx as a `buffer`.
 
 Flags:
-[-] `secp256k1.secp256k1_context_SIGN`
-[-] `secp256k1.secp256k1_context_VERIFY`
-[-] `secp256k1.secp256k1_context_NONE`
-[-] `secp256k1.secp256k1_context_DECLASSIFY`
+- `secp256k1.secp256k1_context_SIGN`
+- `secp256k1.secp256k1_context_VERIFY`
+- `secp256k1.secp256k1_context_NONE`
+- `secp256k1.secp256k1_context_DECLASSIFY`
 
 #### `secp256k1.secp256k1_context_randomize(ctx, [seed32])`
 
@@ -70,8 +70,8 @@ Parse a 33 or 65 byte secp256k1 public key into the 64 byte internal representat
 Serialise a secp256k1 public key to either its 33 or 65 byte representation, the result shall be written to `output` and the function returns the number of bytes written.
 
 Flags:
-[-] `secp256k1.secp256k1_ec_COMPRESSED`
-[-] `secp256k1.secp256k1_ec_UNCOMPRESSED`
+- `secp256k1.secp256k1_ec_COMPRESSED`
+- `secp256k1.secp256k1_ec_UNCOMPRESSED`
 
 #### `secp256k1.secp256k1_ec_sekey_verify(ctx, seckey)`
 
