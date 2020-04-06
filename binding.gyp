@@ -13,11 +13,14 @@
     {
       'target_name': 'secp256k1',
       'sources': [
+        'secp256k1/src/secp256k1.c',
         'secp256k1/src',
         'binding.c'
       ],
       'include_dirs': [
-        'secp256k1/include',
+        'secp256k1',
+        'secp256k1/src',
+        'secp256k1/include'
       ],
       'xcode_settings': {
         'OTHER_CFLAGS': [
@@ -38,15 +41,15 @@
       'defines': [
         'ECMULT_GEN_PREC_BITS=4',
         'ECMULT_WINDOW_SIZE=15',
-
+        # Activate modules
         'ENABLE_MODULE_ECDH=1',
         'ENABLE_MODULE_RECOVERY=1',
-
+        #
         'USE_ENDOMORPHISM=1',
-
+        # Ignore GMP, dynamic linking, so will be hard to use with prebuilds
         'USE_NUM_NONE=1',
         'USE_FIELD_INV_BUILTIN=1',
-        'USE_SCALAR_INV_BUILTIN=1',
+        'USE_SCALAR_INV_BUILTIN=1'
       ],
       'conditions': [
         ['target_arch=="x64" and OS!="win"', {
