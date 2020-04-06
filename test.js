@@ -81,7 +81,6 @@ test('ec seckey verify', t => {
   t.notOk(secp256k1.secp256k1_ec_seckey_verify(ctx, Buffer.alloc(32, 0xff)))
 
   t.throws(() => secp256k1.secp256k1_ec_seckey_verify(ctx, Buffer.alloc(16, 0xab)))
-  t.throws(() => secp256k1.secp256k1_ec_seckey_verify(ctx, Buffer.alloc(0)))
   t.throws(() => secp256k1.secp256k1_ec_seckey_verify(ctx, 'string'))
   t.throws(() => secp256k1.secp256k1_ec_seckey_verify(ctx, 0xff))
   t.throws(() => secp256k1.secp256k1_ec_seckey_verify(ctx, [2, 3, 4]))

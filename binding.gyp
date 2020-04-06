@@ -31,12 +31,8 @@
         ]
       },
       'cflags': [
-        '-Wno-unused-function',
-        '-Wno-nonnull-compare',
         '-g',
         '-O3',
-        '-Wall',
-        '-pedantic-errors'
       ],
       'defines': [
         'ECMULT_GEN_PREC_BITS=4',
