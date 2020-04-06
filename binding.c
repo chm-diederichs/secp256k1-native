@@ -51,7 +51,7 @@ napi_value sn_secp256k1_context_randomize (napi_env env, napi_callback_info info
   SN_ARGV_BUFFER_CAST(secp256k1_context *, ctx, 0)
   SN_ARGV_OPTS_TYPEDARRAY(seed32, 1)
 
-  if (seed32_data) {
+  if (seed32_data != NULL) {
     SN_THROWS(seed32_size != 32, "seed must be 'secp256k1_context_SEEDBYTES' bytes")
   }
 
@@ -406,6 +406,7 @@ static napi_value create_secp256k1_native(napi_env env) {
   SN_EXPORT_UINT32(secp256k1_context_SIGN, SECP256K1_CONTEXT_SIGN)
   SN_EXPORT_UINT32(secp256k1_context_DECLASSIFY, SECP256K1_CONTEXT_DECLASSIFY)
   SN_EXPORT_UINT32(secp256k1_context_NONE, SECP256K1_CONTEXT_NONE)
+  SN_EXPORT_UINT32(secp256k1_context_SEEDBYTES, 32)
   SN_EXPORT_UINT32(secp256k1_ec_COMPRESSED, SECP256K1_EC_COMPRESSED)
   SN_EXPORT_UINT32(secp256k1_ec_UNCOMPRESSED, SECP256K1_EC_UNCOMPRESSED)
   SN_EXPORT_UINT32(secp256k1_tag_pubkey_EVEN, SECP256K1_TAG_PUBKEY_EVEN)
