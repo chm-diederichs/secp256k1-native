@@ -13,7 +13,7 @@
     {
       'target_name': 'secp256k1',
       'sources': [
-        'secp256k1',
+        'secp256k1/src',
         'binding.c'
       ],
       'include_dirs': [
@@ -48,9 +48,6 @@
         'USE_FIELD_INV_BUILTIN=1',
         'USE_SCALAR_INV_BUILTIN=1',
       ],
-      'libraries': [
-        '<!(node preinstall.js --print-lib)'
-      ],
       'conditions': [
         ['target_arch=="x64" and OS!="win"', {
           'defines': [
@@ -65,7 +62,7 @@
             'USE_SCALAR_8X32=1',
           ]
         }],
-                ['OS != "mac" and OS != "win"', {
+        ['OS != "mac" and OS != "win"', {
           'link_settings': {
             'libraries': [ "-Wl,-rpath=\\$$ORIGIN"]
           }
