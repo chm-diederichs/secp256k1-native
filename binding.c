@@ -2,10 +2,10 @@
 #include <string.h>
 #include <assert.h>
 #include "macros.h"
-#include "./deps/secp256k1/include/secp256k1.h"
-#include "./deps/secp256k1/include/secp256k1_ecdh.h"
-#include "./deps/secp256k1/include/secp256k1_preallocated.h"
-#include "./deps/secp256k1/include/secp256k1_recovery.h"
+#include "secp256k1.h"
+#include "secp256k1_ecdh.h"
+#include "secp256k1_preallocated.h"
+#include "secp256k1_recovery.h"
 // #include "secp256k1/src/secp256k1.c"
 
 static uint8_t typedarray_width(napi_typedarray_type type) {
