@@ -18,7 +18,14 @@ addons:
     packages:
     - g++-7
 
+# Handle git submodules yourself
+git:
+    submodules: false
+
+# Use sed to replace the SSH URL with the public URL, then initialize submodules
 before_install:
+  - sed -i 's/git@github.com:/https:\/\/github.com\//' .gitmodules
+  - git submodule update --init --recursive
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=gcc-7 && CXX=g++-7; fi
   - if ! [[ "$TRAVIS_OS_NAME" == "windows" ]]; then npm run fetch-secp256k1; fi
 
