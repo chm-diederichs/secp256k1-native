@@ -20,6 +20,11 @@
           '-pedantic-errors',
         ]
       },
+      'defines': [
+        'ENABLE_MODULE_ECDH=1',
+        'ENABLE_MODULE_RECOVERY=1',
+        'ENABLE_EXPERIMENTAL'
+      ],
       'cflags': [
         '-g',
         '-O3',
