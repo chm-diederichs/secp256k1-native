@@ -24,7 +24,7 @@ git:
 
 # Use sed to replace the SSH URL with the public URL, then initialize submodules
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then sed -i 's/git@github.com:/https:\/\/github.com\//'; fi
+  - sed -i 's/git@github.com:/https:\/\/github.com\//'
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=gcc-7 && CXX=g++-7; fi
   - npm run fetch-secp256k1
 
