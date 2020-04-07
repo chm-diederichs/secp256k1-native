@@ -196,8 +196,7 @@ napi_value sn_secp256k1_ec_pubkey_combine (napi_env env, napi_callback_info info
   uint32_t batch_length;
   napi_get_array_length(env, argv[2], &batch_length);
 
-  const secp256k1_pubkey** pubkeys;
-  pubkeys = (const secp256k1_pubkey**)malloc(sizeof(secp256k1_pubkey*) * batch_length);
+  const secp256k1_pubkey* pubkeys[100];
 
   for (uint32_t i = 0; i < batch_length; i++) {
     napi_value element;
@@ -208,7 +207,10 @@ napi_value sn_secp256k1_ec_pubkey_combine (napi_env env, napi_callback_info info
     pubkeys[i] = pubkey;
   }
 
-  SN_RETURN(secp256k1_ec_pubkey_combine(ctx, pubnonce, pubkeys, batch_length), "could not combine public keys")
+  int success = secp256k1_ec_pubkey_combine(ctx, pubnonce, pubkeys, batch_length);
+  SN_THROWS(success != 1, "could not combine public keys")
+
+  return NULL;
 }
 
 napi_value sn_secp256k1_ecdsa_signature_parse_der (napi_env env, napi_callback_info info) {
