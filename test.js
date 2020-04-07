@@ -212,30 +212,30 @@ test('ec key vectors', t => {
   t.end()
 })
 
-test('ec key combine vectors', t => {
-  var ctx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_SIGN)
+// test('ec key combine vectors', t => {
+//   var ctx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_SIGN)
   
-  const pubkeys = vectors.pubkey.map(vec => Buffer.from(vec.pubkey, 'hex'))
-  for (let vector of vectors.combine) {
-    const pubs = []
+//   const pubkeys = vectors.pubkey.map(vec => Buffer.from(vec.pubkey, 'hex'))
+//   for (let vector of vectors.combine) {
+//     const pubs = []
 
-    for (let i of vector.indices) {
-      buf = Buffer.alloc(64)
-      secp256k1.secp256k1_ec_pubkey_parse(ctx, buf, pubkeys[i])
-      pubs.push(buf)
-    }
+//     for (let i of vector.indices) {
+//       buf = Buffer.alloc(64)
+//       secp256k1.secp256k1_ec_pubkey_parse(ctx, buf, pubkeys[i])
+//       pubs.push(buf)
+//     }
 
-    const pubkey33 = Buffer.alloc(33)
-    const pubkey64 = Buffer.alloc(64)
+//     const pubkey33 = Buffer.alloc(33)
+//     const pubkey64 = Buffer.alloc(64)
 
-    secp256k1.secp256k1_ec_pubkey_combine(ctx, pubkey64, pubs)
-    secp256k1.secp256k1_ec_pubkey_serialize(ctx, pubkey33, pubkey64, secp256k1.secp256k1_ec_COMPRESSED)
+//     secp256k1.secp256k1_ec_pubkey_combine(ctx, pubkey64, pubs)
+//     secp256k1.secp256k1_ec_pubkey_serialize(ctx, pubkey33, pubkey64, secp256k1.secp256k1_ec_COMPRESSED)
 
-    t.same(pubkey33, Buffer.from(vector.combine, 'hex'))
-  }
+//     t.same(pubkey33, Buffer.from(vector.combine, 'hex'))
+//   }
 
-  t.end()
-})
+//   t.end()
+// })
 
 test('ecdh vectors', t => {
   var ctx = secp256k1.secp256k1_context_create(secp256k1.secp256k1_context_SIGN)
