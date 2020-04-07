@@ -1,7 +1,7 @@
   
 {
   'variables': {
-    'target_arch%': '<!(node preinstall.js --print-arch)>'
+    'target_arch%': '<!(node -p "process.arch")>'
   },
   'target_default': {
     'cflags': [
@@ -31,8 +31,6 @@
         ]
       },
       'cflags': [
-        '-Wno-unused-function',
-        '-Wno-nonnull-compare',
         '-g',
         '-O3',
         '-Wall',
