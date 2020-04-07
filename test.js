@@ -57,7 +57,6 @@ test('context randomize', t => {
   t.doesNotThrow(() => secp256k1.secp256k1_context_randomize(signCtx, seed))
   t.doesNotThrow(() => secp256k1.secp256k1_context_randomize(declassifyCtx, seed))
 
-  t.throws(() => secp256k1.secp256k1_context_randomize(noneCtx, Buffer.alloc(0)))
   t.throws(() => secp256k1.secp256k1_context_randomize(noneCtx, Buffer.alloc(33)))
   t.throws(() => secp256k1.secp256k1_context_randomize(noneCtx, 'string'))
   t.throws(() => secp256k1.secp256k1_context_randomize(noneCtx, 0xff))
