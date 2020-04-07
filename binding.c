@@ -195,8 +195,9 @@ napi_value sn_secp256k1_ec_pubkey_combine (napi_env env, napi_callback_info info
 
   uint32_t batch_length;
   napi_get_array_length(env, argv[2], &batch_length);
+  SN_THROWS(batch_length > 100, "batch too long, number of keys should be <= 100 ")
 
-  const secp256k1_pubkey* pubkeys[batch_length];
+  const secp256k1_pubkey* pubkeys[100];
 
   for (uint32_t i = 0; i < batch_length; i++) {
     napi_value element;

@@ -233,6 +233,16 @@ test('ec key combine vectors', t => {
     t.same(pubkey33, Buffer.from(vector.combine, 'hex'))
   }
 
+  var tooMany = new Array(101)
+  var key = Buffer.alloc(64)
+  secp256k1.secp256k1_ec_pubkey_parse(ctx, buf, pubkeys[1])
+
+  for (let i = 0; i < 101; i++) {
+    tooMany[i] = key
+  }
+
+  t.throws(() => secp256k1.secp256k1_ec_pubkey_combine(ctx, key, tooMany))
+
   t.end()
 })
 
