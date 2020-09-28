@@ -10,6 +10,10 @@
     "prebuild": "prebuildify --napi --strip",
     "prebuild-ia32": "prebuildify --arch=ia32 --napi --strip"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chm-diederichs/secp256k1-native.git"
+  },
   "author": "",
   "license": "ISC",
   "devDependencies": {
