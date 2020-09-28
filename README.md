@@ -73,7 +73,7 @@ Randomize a given context. `seed32` may be used to pass 32 bytes of entropy or e
 Parse a 33 or 65 byte secp256k1 public key into the 64 byte internal representation used by the library. The result shall be written to `pubkey`, which should be a 64 byte `buffer`. Any `ctx` may be used.
 
 
-#### `const size = secp256k1.secp256k1_ec_pubeky_serialize(ctx, output, pubkey, flags)`
+#### `const size = secp256k1.secp256k1_ec_pubkey_serialize(ctx, output, pubkey, flags)`
 
 Serialise a secp256k1 public key to either its 33 or 65 byte representation, the result shall be written to `output` and the function returns the number of bytes written.
 
@@ -148,7 +148,7 @@ Serialise `sig` to `output` as a DER-encoded ECDSA signature.
 Serialise `sig` to `output` as a compact 64 byte ECDSA signature.
 
 
-#### `const hasChanged = secp256k1.secp256k1_ecdsa_signature_normalize(ctx, sig)`
+#### `const hasChanged = secp256k1.secp256k1_ecdsa_signature_normalize(ctx, sigout, sigin)`
 
 Normalise a compact-encoded ECDSA signature to it's lower-S form. Returns a boolean as to whether the signature was changed.
 
